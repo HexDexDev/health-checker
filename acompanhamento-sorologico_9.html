@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acompanhamento sorológico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f0eef8; --card:#fff; --ink:#1a1633; --muted:#645d85; --line:#e3dff2;
+    --indigo:#4b3fbe; --indigo-2:#372c96; --teal:#0fa39c; --coral:#e2685e; --amber:#e0a53c;
+    --soft:#ece9fa; --mint:#e4f6f4;
+    --display:"Sora",ui-sans-serif,system-ui,sans-serif;
+    --sans:"Inter",ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sh:0 1px 2px rgba(26,22,51,.05),0 14px 34px rgba(26,22,51,.09);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;padding:18px 14px 70px}
+  .wrap{max-width:840px;margin:0 auto}
+
+  .hero{
+    position:relative;overflow:hidden;border-radius:24px;padding:22px;margin-bottom:18px;color:#fff;
+    background:linear-gradient(135deg,#3a2ea8 0%,#6a4fd8 48%,#0fa39c 128%);
+    box-shadow:0 20px 46px rgba(58,46,168,.34);
+  }
+  .hero .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;position:relative;z-index:2}
+  .badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.26);
+    padding:5px 11px;border-radius:20px;font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase}
+  .badge i{width:6px;height:6px;border-radius:50%;background:#8ff3ea;box-shadow:0 0 10px #8ff3ea;animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .hero h1{font-family:var(--display);font-size:clamp(25px,6.4vw,36px);line-height:1.08;letter-spacing:-.03em;margin:12px 0 6px;font-weight:700}
+  .hero p{margin:0;font-size:14.5px;opacity:.92;max-width:54ch}
+  .hero .drchip{display:inline-block;margin:0 0 8px;padding:6px 13px;border-radius:20px;font-size:13.5px;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26)}
+  .hero .drchip b{font-weight:600}
+  .dilstrip{position:absolute;right:-30px;bottom:-30px;width:230px;height:230px;opacity:.16;z-index:1;pointer-events:none}
+  .hbtns{display:flex;gap:8px;flex:none}
+  .hbtn{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;cursor:pointer;color:#fff;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28)}
+  .hbtn:hover{background:rgba(255,255,255,.3)}
+  .hbtn.off{opacity:.5}
+
+  h2{font-family:var(--display);font-size:19px;letter-spacing:-.02em;margin:0 0 4px;font-weight:600;display:flex;align-items:center;gap:9px}
+  h2 .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:16px;box-shadow:var(--sh)}
+  .card > h2 + p{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .trbase{background:linear-gradient(120deg,var(--soft),#fff);border:1px solid var(--line);border-left:5px solid var(--indigo);
+    border-radius:14px;padding:13px 15px;margin-top:14px}
+  .trbase .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--indigo)}
+  .trbase .val{font-family:var(--display);font-size:19px;font-weight:600;margin-top:3px}
+  .trbase .sub{font-size:13px;color:var(--muted);margin-top:4px}
+  .expo{border-left:6px solid var(--coral);background:linear-gradient(120deg,#fff5f3,#fff)}
+  .expbig{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin-top:6px}
+  .expbig b{font-family:var(--display);font-size:clamp(24px,6vw,32px);font-weight:700;letter-spacing:-.03em;color:var(--ink)}
+  .expbig i{font-style:normal;font-family:var(--mono);font-size:13px;color:var(--coral);background:#fdeceb;padding:4px 11px;border-radius:20px}
+  .expgrid{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .expgrid div{flex:1 1 150px;background:var(--soft);border-radius:12px;padding:10px 13px}
+  .expgrid .lbl{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}
+  .expgrid .val{font-family:var(--display);font-size:17px;font-weight:600;margin-top:2px}
+  .note{background:#fff5e9;border:1px solid #f2e0c4;border-left:5px solid var(--amber);border-radius:14px;padding:13px 15px;margin-bottom:16px;font-size:14px;color:#6b4c1d}
+  .note b{color:#4e3612}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:5px}
+  input,select{width:100%;font-family:var(--sans);font-size:16px;padding:11px 12px;border-radius:11px;border:1.5px solid var(--line);background:#fcfbff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px var(--soft)}
+  .hint{font-size:12px;color:var(--muted);margin:5px 0 0}
+  button.act{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 20px;border-radius:13px;border:none;cursor:pointer;color:#fff;
+    background:linear-gradient(120deg,var(--indigo),var(--teal));transition:transform .18s,box-shadow .18s}
+  button.act:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(75,63,190,.3)}
+  button.act.ghost{background:#fff;color:var(--indigo);border:1.5px solid var(--line)}
+  button.act.ghost:hover{border-color:var(--indigo);background:var(--soft);box-shadow:none}
+  button:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+  .row-btns{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+
+  /* status */
+  .status{background:linear-gradient(150deg,#3a2ea8,#5b45cf 50%,#0fa39c 135%);color:#f5f3ff;border:none;box-shadow:0 20px 42px rgba(58,46,168,.34)}
+  .status .eq{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;opacity:.8}
+  .big{display:flex;align-items:baseline;gap:12px;margin:10px 0 2px}
+  .big .n{font-family:var(--display);font-size:clamp(46px,13vw,68px);font-weight:700;letter-spacing:-.04em;line-height:.95}
+  .big .u{font-family:var(--mono);font-size:12.5px;opacity:.8;max-width:130px;line-height:1.35}
+  .pill{display:inline-flex;align-items:center;gap:9px;margin-top:12px;padding:9px 15px;border-radius:12px;background:rgba(255,255,255,.16);font-weight:600;font-size:15px}
+  .pill i{width:11px;height:11px;border-radius:50%;flex:none}
+  .delta{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .delta div{flex:1 1 140px;background:rgba(255,255,255,.13);border-radius:13px;padding:11px 13px}
+  .delta .lbl{font-family:var(--mono);font-size:10.5px;opacity:.78;text-transform:uppercase;letter-spacing:.1em}
+  .delta .val{font-family:var(--display);font-size:20px;font-weight:600;margin-top:3px}
+  .alert{margin-top:16px;padding:13px 15px;border-radius:13px;background:#fff1ef;color:#8c3229;border:1px solid #f4d3ce;font-size:14px}
+  .alert b{display:block;margin-bottom:2px}
+
+  /* tabelas */
+  table.t{width:100%;border-collapse:collapse;font-size:14px}
+  table.t th{text-align:left;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:500;padding:0 8px 8px 0}
+  table.t td{padding:9px 8px 9px 0;border-top:1px solid var(--line);vertical-align:top}
+  table.t td.n{font-family:var(--mono)}
+  .del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;padding:2px 7px;border-radius:7px}
+  .del:hover{background:#fdeceb;color:var(--coral)}
+  .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;color:#fff;font-family:var(--mono)}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:22px 0}
+
+  .agenda{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .ag{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:13px;background:var(--soft);border-left:4px solid var(--indigo)}
+  .ag.done{background:var(--mint);border-left-color:var(--teal)}
+  .ag.late{background:#fff1ef;border-left-color:var(--coral)}
+  .ag b{font-family:var(--display);font-size:15px}
+  .ag span{font-size:13px;color:var(--muted);margin-left:auto;font-family:var(--mono)}
+
+  .checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chk{display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:11px;padding:9px 13px;font-size:14px;cursor:pointer}
+  .chk input{width:auto;margin:0}
+
+  footer{font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+  footer b{color:var(--ink)}
+  .sig{
+    text-align:center;margin-top:22px;font-family:var(--display);font-size:14.5px;font-weight:600;color:var(--indigo-2);
+    background:linear-gradient(120deg,var(--soft),var(--mint));border-radius:16px;padding:14px;
+  }
+  .sig span{display:inline-block;font-size:16px;animation:beat 1.6s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}14%{transform:scale(1.25)}28%{transform:scale(1)}42%{transform:scale(1.18)}}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,16px);opacity:0;pointer-events:none;z-index:9;
+    background:var(--ink);color:#fff;border-radius:12px;padding:11px 18px;font-size:14px;transition:.25s}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+
+  /* modo discreto */
+  body.discreet .hide{filter:blur(7px);transition:filter .18s}
+  body.discreet .hide:hover,body.discreet .hide:focus-within,body.discreet .hide:active{filter:none}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <svg class="dilstrip" viewBox="0 0 200 200" aria-hidden="true">
+      <g fill="none" stroke="#fff" stroke-width="2.5">
+        <circle cx="40" cy="60" r="26"/><circle cx="95" cy="60" r="20"/><circle cx="140" cy="60" r="14"/><circle cx="172" cy="60" r="9"/>
+        <path d="M14 130h172M40 122v16M95 122v16M140 122v16M172 122v16"/>
+      </g>
+    </svg>
+    <div class="top">
+      <span class="badge"><i></i> curva de titulação VDRL / RPR</span>
+      <div class="hbtns">
+        <button class="hbtn" id="eye" aria-label="Modo discreto" title="Modo discreto — desfoca os números">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="hbtn" id="snd" aria-label="Ligar ou desligar o som" title="Som">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path id="w1" d="M15.5 8.5a5 5 0 0 1 0 7"/><path id="w2" d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        </button>
+      </div>
+    </div>
+    <h1>Acompanhamento sorológico</h1>
+    <p class="drchip">Acompanhamento com <b>Dr. Eduardo Miolo de Carvalho</b></p>
+    <p>Registre os títulos, acompanhe a queda ao longo dos meses e gere um relatório em PDF para levar à consulta com o Dr. Eduardo Miolo de Carvalho.</p>
+  </header>
+
+  <div class="note">
+    <b>Como ler esta tela:</b> o que mostra resposta ao tratamento é a queda de quatro vezes (duas diluições) em relação ao título antes do tratamento — de 1:64 para 1:16, por exemplo. O teste treponêmico costuma seguir reagente pelo resto da vida e não serve para acompanhar. Este app organiza os seus dados; quem interpreta, define o esquema e os prazos é o Dr. Eduardo Miolo de Carvalho.
+  </div>
+
+  <!-- CONTAMINAÇÃO -->
+  <section class="card expo" id="expCard" style="display:none">
+    <h2><span class="dot" style="background:var(--coral)"></span> Contaminação</h2>
+    <div class="expbig hide"><b id="expWhen">—</b><i id="expAgo"></i></div>
+    <div class="expgrid hide" id="expGrid"></div>
+  </section>
+
+  <!-- CONFIGURAÇÃO -->
+  <section class="card">
+    <h2><span class="dot" style="background:var(--indigo)"></span> Meu caso</h2>
+    <p>Fica salvo só neste navegador. Preencha uma vez.</p>
+    <div class="grid">
+      <div><label for="expDate">Data da contaminação</label><input type="date" id="expDate"><p class="hint">ex.: 15/05/2026</p></div>
+      <div>
+        <label for="expTime">Horário da contaminação</label>
+        <input type="time" id="expTime">
+        <p class="hint">ex.: 14:00 — aparece em destaque no topo e no PDF.</p>
+      </div>
+      <div><label for="dxDate">Data do diagnóstico</label><input type="date" id="dxDate"><p class="hint">ex.: 25/08/2026</p></div>
+      <div>
+        <label for="test">Teste usado no seguimento</label>
+        <select id="test"><option>VDRL</option><option>RPR</option><option>USR</option></select>
+        <p class="hint">Use sempre o mesmo teste e, se der, o mesmo laboratório — os valores não são intercambiáveis.</p>
+      </div>
+      <div>
+        <label for="baseT">Título antes do tratamento (VDRL/RPR)</label>
+        <select id="baseT"></select>
+      </div>
+      <div>
+        <label for="btMethod">Treponêmico antes do tratamento — método</label>
+        <select id="btMethod">
+          <option value="">—</option>
+          <option>ELISA / CMIA (anticorpos totais)</option>
+          <option>TPHA / TPPA</option>
+          <option>FTA-Abs</option>
+          <option>Teste rápido</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div>
+        <label for="btResult">Resultado do treponêmico inicial</label>
+        <select id="btResult"><option value="">—</option><option>Reagente</option><option>Não reagente</option><option>Indeterminado</option></select>
+      </div>
+      <div>
+        <label for="btIndex">Índice inicial (amostra/cutoff)</label>
+        <input type="text" id="btIndex" class="dec" placeholder="70,00" inputmode="decimal" autocomplete="off">
+        <p class="hint">Anticorpos totais do diagnóstico. Fica em destaque na seção do treponêmico e no PDF.</p>
+      </div>
+      <div>
+        <label for="scheme">Esquema orientado pelo Dr. Eduardo Miolo de Carvalho</label>
+        <select id="scheme">
+          <option value="1">Penicilina benzatina — dose única</option>
+          <option value="3">Penicilina benzatina — 3 doses semanais</option>
+          <option value="0">Outro / definido pelo Dr. Eduardo Miolo de Carvalho</option>
+        </select>
+      </div>
+      <div>
+        <label for="months">Retornos de exame (meses)</label>
+        <input type="text" id="months" placeholder="3, 6, 12">
+        <p class="hint">Ajuste conforme o que o Dr. Eduardo Miolo de Carvalho orientou.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATUS -->
+  <section class="card status" id="status" style="display:none"></section>
+
+  <!-- NOVO EXAME -->
+  <section class="card">
+    <h2><span class="dot" style="background:var(--teal)"></span> Novo resultado</h2>
+    <p>Cada resultado entra na curva assim que você salva.</p>
+    <div class="grid">
+      <div><label for="date">Data da coleta</label><input type="date" id="date"></div>
+      <div><label for="titer">Título</label><select id="titer"></select></div>
+      <div><label for="lab">Laboratório (opcional)</label><input type="text" id="lab" placeholder="ex.: Unimed Sorocaba"></div>
+      <div><label for="obs">Observação (opcional)</label><input type="text" id="obs" placeholder="ex.: Hospital Unimed"></div>
+    </div>
+    <div class="row-btns">
+      <button class="act" id="save">Salvar resultado</button>
+      <button class="act ghost" id="clearForm">Limpar campos</button>
+    </div>
+  </section>
+
+  <!-- CURVA -->
+  <section class="card">
+    <h2><span class="dot" style="background:var(--coral)"></span> Curva de titulação</h2>
+    <p>Cada degrau do eixo é uma diluição. A faixa verde marca onde o título já caiu quatro vezes.</p>
+    <div id="chart" class="hide"></div>
+    <div id="hist" class="hide"></div>
+  </section>
+
+  <!-- TREPONÊMICO -->
+  <section class="card">
+    <h2><span class="dot" style="background:var(--indigo)"></span> Teste treponêmico (anticorpos totais)</h2>
+    <p>FTA-Abs, TPHA/TPPA, ELISA/CMIA ou teste rápido. Confirma o diagnóstico — não mede resposta ao tratamento.</p>
+    <div class="grid">
+      <div><label for="trDate">Data da coleta</label><input type="date" id="trDate"></div>
+      <div>
+        <label for="trMethod">Método</label>
+        <select id="trMethod">
+          <option>ELISA / CMIA (anticorpos totais)</option>
+          <option>TPHA / TPPA</option>
+          <option>FTA-Abs</option>
+          <option>Teste rápido</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div>
+        <label for="trResult">Resultado</label>
+        <select id="trResult"><option>Reagente</option><option>Não reagente</option><option>Indeterminado</option></select>
+      </div>
+      <div>
+        <label for="trIndex">Índice (amostra/cutoff) — opcional</label>
+        <input type="text" id="trIndex" class="dec" placeholder="70,00" inputmode="decimal" autocomplete="off">
+      </div>
+      <div><label for="trLab">Laboratório (opcional)</label><input type="text" id="trLab" placeholder="ex.: Unimed Sorocaba"></div>
+    </div>
+    <div class="row-btns"><button class="act ghost" id="addTrep">Adicionar resultado</button></div>
+    <div id="trepList"></div>
+    <div class="note" style="margin:16px 0 0">
+      <b>Por que este número não desce:</b> na maior parte das pessoas o treponêmico segue reagente pelo resto da vida, mesmo com tratamento completo e cura — é a memória sorológica. Os testes automatizados trazem um índice numérico, e ele não se comporta como o título do VDRL: subir ou descer ali não diz se o tratamento funcionou. Por isso o app guarda o índice mas não desenha curva com ele. Quem avalia é o Dr. Eduardo Miolo de Carvalho.
+    </div>
+  </section>
+
+  <!-- DOSES -->
+  <section class="card">
+    <h2><span class="dot" style="background:var(--amber)"></span> Doses aplicadas</h2>
+    <p>Registre a data de cada aplicação.</p>
+    <div class="grid">
+      <div><label for="doseDate">Data da aplicação</label><input type="date" id="doseDate"></div>
+      <div><label for="doseLocal">Onde foi aplicada (opcional)</label><input type="text" id="doseLocal" placeholder="ex.: Hospital Unimed"></div>
+    </div>
+    <div class="row-btns"><button class="act ghost" id="addDose">Adicionar dose</button></div>
+    <div id="doses"></div>
+  </section>
+
+  <!-- AGENDA -->
+  <section class="card">
+    <h2><span class="dot" style="background:var(--teal)"></span> Próximos exames</h2>
+    <p>Contados a partir da primeira dose (ou do diagnóstico, se ainda não houver dose registrada).</p>
+    <div class="agenda" id="agenda"></div>
+    <h2 style="margin-top:22px;font-size:16px"><span class="dot" style="background:var(--indigo)"></span> Exames que costumam andar juntos</h2>
+    <div class="checks" id="checks"></div>
+    <p class="hint">Marque o que já foi feito. Quais pedir e quando repetir é o Dr. Eduardo Miolo de Carvalho que define.</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="dot" style="background:var(--indigo)"></span> Levar para a consulta</h2>
+    <p>O PDF traz o resumo, a curva, a tabela de resultados e as doses aplicadas.</p>
+    <div class="row-btns">
+      <button class="act" id="pdf">Gerar PDF</button>
+      <button class="act ghost" id="csv">Exportar CSV</button>
+      <button class="act ghost" id="json">Salvar backup</button>
+      <button class="act ghost" id="load">Restaurar backup</button>
+    </div>
+    <input type="file" id="loadFile" accept="application/json" hidden>
+  </section>
+
+  <footer>
+    <b>Sobre os critérios.</b> A resposta ao tratamento é avaliada pela queda de quatro vezes (duas diluições) no teste não treponêmico em relação ao título pré-tratamento, geralmente aos 6 e 12 meses. Um aumento de quatro vezes em relação ao menor título alcançado pode indicar reinfecção ou falha e é motivo para procurar o Dr. Eduardo Miolo de Carvalho. Parte das pessoas mantém títulos baixos e estáveis sem atingir a queda esperada — o chamado estado serofast — e isso nem sempre significa falha.<br><br>
+    <b>Limites.</b> Este app não faz diagnóstico, não indica tratamento e não substitui a consulta. O esquema, os intervalos entre doses e o calendário de retorno são definidos pelo Dr. Eduardo Miolo de Carvalho, que acompanha o meu caso e segue o protocolo vigente. Na dúvida sobre qualquer número desta tela, quem responde é ele.<br><br>
+    <b>Privacidade.</b> Nada sai deste navegador: sem conta, sem servidor, sem nuvem. O botão do olho no topo desfoca os números na tela. Os dados só saem daqui se você exportar.
+  </footer>
+
+  <div class="sig">Feito com amor <span>❤️</span> por Henrique</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= SOM ================= */
+let ac=null,master=null,muted=false;
+function audio(){
+  if(!ac){ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=.45; master.connect(ac.destination); }
+  if(ac.state==='suspended') ac.resume();
+  return ac;
+}
+function tone(f,{dur=.13,type='sine',vol=.06,to=null,delay=0}={}){
+  if(muted) return;
+  const c=audio(),t=c.currentTime+delay,o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);
+  if(to) o.frequency.exponentialRampToValueAtTime(to,t+dur);
+  g.gain.setValueAtTime(.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+.012);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.03);
+}
+const SFX={
+  tap(){ tone(640,{dur:.05,type:'triangle',vol:.03}); },
+  /* confirmação neutra — o mesmo som para qualquer resultado */
+  saved(){ tone(587,{dur:.1,vol:.05}); tone(784,{dur:.1,vol:.045,delay:.08}); tone(1047,{dur:.28,vol:.04,delay:.16}); },
+  step(){ tone(880,{dur:.07,type:'sine',vol:.035}); },
+  undo(){ tone(392,{dur:.13,type:'triangle',vol:.045,to:262}); },
+  paper(){ tone(523,{dur:.09,vol:.04}); tone(659,{dur:.09,vol:.04,delay:.07}); tone(880,{dur:.22,vol:.035,delay:.14}); }
+};
+const sndBtn=document.getElementById('snd');
+sndBtn.onclick=()=>{
+  muted=!muted; sndBtn.classList.toggle('off',muted);
+  document.getElementById('w1').style.opacity=muted?.2:1;
+  document.getElementById('w2').style.opacity=muted?.2:1;
+  if(!muted) SFX.tap();
+};
+document.getElementById('eye').onclick=e=>{
+  document.body.classList.toggle('discreet');
+  e.currentTarget.classList.toggle('off',document.body.classList.contains('discreet'));
+  SFX.tap();
+};
+
+/* ================= ESTADO ================= */
+const KEY='sifilis-seguimento:v1';
+const LABS=['HIV','Hepatite B','Hepatite C'];
+const state={cfg:{expDate:'',expTime:'',dxDate:'',test:'VDRL',baseN:null,scheme:'1',months:'3, 6, 12',btMethod:'',btResult:'',btIndex:null,checks:[]},exams:[],doses:[],trep:[]};
+let persisted=false;
+async function save(){ try{ await window.storage.set(KEY,JSON.stringify(state)); persisted=true; }catch(e){ persisted=false; } }
+async function load(){
+  try{ const r=await window.storage.get(KEY);
+    if(r&&r.value){ const d=JSON.parse(r.value); Object.assign(state.cfg,d.cfg||{}); state.exams=d.exams||[]; state.doses=d.doses||[]; state.trep=d.trep||[];
+      const _old=(state.trep||[]).find(x=>x.base);
+      if(_old&&!state.cfg.btMethod){ state.cfg.btMethod=_old.method; state.cfg.btResult=_old.result; state.cfg.btIndex=_old.idx??null; }
+      if(typeof d.cfg?.trep==='string'&&d.cfg.trep&&!state.trep.length) state.trep.push({date:state.cfg.dxDate||today(),method:'Não informado',result:d.cfg.trep,idx:null,lab:''}); persisted=true; }
+  }catch(e){ persisted=false; }
+}
+
+/* ================= TÍTULOS ================= */
+/* n = expoente: título = 1:2^n. n = -1 representa não reagente */
+const MAXN=11;
+const titerLabel=n=>n<0?'Não reagente':'1:'+Math.pow(2,n);
+function fillTiterSelect(sel,includeNR){
+  let h=includeNR?'<option value="-1">Não reagente</option>':'';
+  for(let n=0;n<=MAXN;n++) h+='<option value="'+n+'">1:'+Math.pow(2,n)+'</option>';
+  sel.innerHTML=h;
+}
+const $=id=>document.getElementById(id);
+const decParse=v=>{ const n=parseFloat(String(v).replace(/\./g,'.').replace(',','.')); return isFinite(n)?n:null; };
+const decShow=n=>n==null?'':n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function bindDecimals(){
+  document.querySelectorAll('input.dec').forEach(el=>{
+    el.addEventListener('input',()=>{ el.value=el.value.replace(/[^0-9.,]/g,'').replace(/\./g,','); });
+    el.addEventListener('blur',()=>{ const n=decParse(el.value); el.value=n==null?'':decShow(n); });
+  });
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dBR=iso=>{const[y,m,d]=iso.split('-');return d+'/'+m+'/'+y;};
+const addMonths=(iso,m)=>{const d=new Date(iso+'T00:00');d.setMonth(d.getMonth()+m);return d.toISOString().slice(0,10);};
+const daysBetween=(a,b)=>Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/864e5);
+const today=()=>new Date().toISOString().slice(0,10);
+let toastT;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),3000);}
+
+/* ================= ANÁLISE ================= */
+function analyse(){
+  const ex=[...state.exams].sort((a,b)=>a.date<b.date?-1:1);
+  if(!ex.length) return null;
+  const base=state.cfg.baseN;
+  const last=ex[ex.length-1];
+  const reactive=ex.filter(e=>e.n>=0);
+  const nadir=reactive.length?Math.min(...reactive.map(e=>e.n)):null;
+  const out={ex,last,base,nadir};
+  out.dropped = base!==null&&base>=0 ? (last.n<0 ? base+1 : base-last.n) : null;   // em diluições
+  out.rise = (nadir!==null&&last.n>=0) ? last.n-nadir : 0;
+
+  if(last.n<0) out.status={k:'nr',color:'var(--teal)',label:'Não reagente'};
+  else if(out.rise>=2) out.status={k:'up',color:'var(--coral)',label:'Aumento de 4 vezes desde o menor título'};
+  else if(out.dropped!==null&&out.dropped>=2) out.status={k:'ok',color:'#4ade80',label:'Queda de 4 vezes alcançada'};
+  else out.status={k:'wait',color:'var(--amber)',label:'Ainda sem queda de 4 vezes'};
+
+  const start=state.doses.length?[...state.doses].sort()[0]:state.cfg.dxDate;
+  out.start=start;
+  out.months = start ? Math.floor(daysBetween(start,last.date)/30.44) : null;
+  return out;
+}
+
+/* ================= CONTAMINAÇÃO ================= */
+const WD=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+function humanSpan(days){
+  if(days<1) return 'hoje';
+  if(days<30) return 'há '+days+' dia'+(days>1?'s':'');
+  const mo=Math.floor(days/30.44), rest=Math.round(days-mo*30.44);
+  if(mo<12) return 'há '+mo+' mês'+(mo>1?'es':'')+(rest?' e '+rest+' dia'+(rest>1?'s':''):'');
+  const yr=Math.floor(mo/12), rm=mo%12;
+  return 'há '+yr+' ano'+(yr>1?'s':'')+(rm?' e '+rm+' mês'+(rm>1?'es':''):'');
+}
+function renderExposure(){
+  const c=state.cfg, box=$('expCard');
+  if(!c.expDate){ box.style.display='none'; return; }
+  box.style.display='block';
+  const t=c.expTime||'00:00';
+  const d=new Date(c.expDate+'T'+t);
+  const days=Math.floor((Date.now()-d.getTime())/864e5);
+  $('expWhen').textContent=dBR(c.expDate)+(c.expTime?' às '+c.expTime:'');
+  $('expAgo').textContent=humanSpan(days);
+  let g='<div><div class="lbl">Dia da semana</div><div class="val">'+WD[d.getDay()]+'</div></div>';
+  if(c.dxDate) g+='<div><div class="lbl">Até o diagnóstico</div><div class="val">'+daysBetween(c.expDate,c.dxDate)+' dias</div></div>';
+  const first=state.doses.length?[...state.doses].map(x=>x.date).sort()[0]:null;
+  if(first) g+='<div><div class="lbl">Até a 1ª dose</div><div class="val">'+daysBetween(c.expDate,first)+' dias</div></div>';
+  g+='<div><div class="lbl">Total decorrido</div><div class="val">'+days+' dias</div></div>';
+  $('expGrid').innerHTML=g;
+}
+
+/* ================= STATUS ================= */
+function renderStatus(){
+  const a=analyse(),box=$('status');
+  if(!a){ box.style.display='none'; return; }
+  box.style.display='block';
+  let deltas='';
+  if(a.base!==null&&a.base>=0)
+    deltas+='<div><div class="lbl">Título inicial</div><div class="val">'+titerLabel(a.base)+'</div></div>';
+  if(a.dropped!==null)
+    deltas+='<div><div class="lbl">Variação</div><div class="val">'+(a.dropped>0?'queda de '+Math.pow(2,a.dropped)+'×':a.dropped<0?'aumento de '+Math.pow(2,-a.dropped)+'×':'sem mudança')+'</div></div>';
+  if(a.months!==null)
+    deltas+='<div><div class="lbl">Desde o início</div><div class="val">'+a.months+' meses</div></div>';
+  deltas+='<div><div class="lbl">Resultados</div><div class="val">'+a.ex.length+'</div></div>';
+
+  let alert='';
+  if(a.status.k==='up') alert='<div class="alert"><b>O título subiu quatro vezes em relação ao menor valor registrado.</b>Isso pode significar reinfecção ou falha do tratamento e costuma pedir reavaliação. Procure o Dr. Eduardo Miolo de Carvalho com este histórico — não espere o próximo retorno programado.</div>';
+  else if(a.status.k==='wait'&&a.months!==null&&a.months>=12) alert='<div class="alert"><b>Já são '+a.months+' meses sem a queda de quatro vezes.</b>Parte das pessoas mantém títulos baixos e estáveis sem atingir esse critério, o que nem sempre indica falha. Leve este histórico ao Dr. Eduardo Miolo de Carvalho na próxima consulta.</div>';
+
+  box.innerHTML=
+    '<span class="eq">'+esc(state.cfg.test)+' · último resultado em '+dBR(a.last.date)+'</span>'+
+    '<div class="big"><span class="n hide">'+titerLabel(a.last.n)+'</span><span class="u">título do teste não treponêmico</span></div>'+
+    '<div class="pill"><i style="background:'+a.status.color+'"></i> '+a.status.label+'</div>'+
+    '<div class="delta hide">'+deltas+'</div>'+alert;
+}
+
+/* ================= CURVA ================= */
+function renderChart(){
+  const ex=[...state.exams].sort((a,b)=>a.date<b.date?-1:1),box=$('chart');
+  if(!ex.length){ box.innerHTML=''; return; }
+  const base=state.cfg.baseN;
+  const pts=[];
+  if(base!==null&&base>=0&&state.cfg.dxDate) pts.push({date:state.cfg.dxDate,n:base,base:true});
+  ex.forEach(e=>pts.push(e));
+  if(pts.length<2){ box.innerHTML='<p class="empty">Salve pelo menos dois resultados (ou preencha o título inicial e a data do diagnóstico) para ver a curva.</p>'; return; }
+
+  const W=680,H=250,PL=58,PR=16,PT=16,PB=34;
+  const xs=pts.map(p=>new Date(p.date+'T00:00').getTime());
+  const expT=state.cfg.expDate?new Date(state.cfg.expDate+'T'+(state.cfg.expTime||'00:00')).getTime():null;
+  const x0=Math.min(...xs,...(expT?[expT]:[])),x1=Math.max(...xs),span=Math.max(1,x1-x0);
+  const maxN=Math.max(2,...pts.map(p=>p.n))+1;
+  const X=t=>PL+(t-x0)/span*(W-PL-PR);
+  const Y=n=>PT+(1-(n+1)/(maxN+1))*(H-PT-PB);
+
+  let grid='';
+  for(let n=-1;n<=maxN;n++){
+    grid+='<line x1="'+PL+'" y1="'+Y(n)+'" x2="'+(W-PR)+'" y2="'+Y(n)+'" stroke="#e3dff2"/>'+
+      '<text x="'+(PL-9)+'" y="'+(Y(n)+4)+'" text-anchor="end" font-size="11" fill="#645d85" font-family="IBM Plex Mono, monospace">'+(n<0?'NR':'1:'+Math.pow(2,n))+'</text>';
+  }
+  let target='';
+  if(base!==null&&base>=2){
+    target='<rect x="'+PL+'" y="'+Y(base-2)+'" width="'+(W-PL-PR)+'" height="'+(H-PB-Y(base-2))+'" fill="#0fa39c" opacity=".10"/>'+
+      '<line x1="'+PL+'" y1="'+Y(base-2)+'" x2="'+(W-PR)+'" y2="'+Y(base-2)+'" stroke="#0fa39c" stroke-width="1.6" stroke-dasharray="6 4"/>'+
+      '<text x="'+(W-PR)+'" y="'+(Y(base-2)-7)+'" text-anchor="end" font-size="11" fill="#0d8b85" font-family="IBM Plex Mono, monospace">queda de 4× ('+titerLabel(base-2)+')</text>';
+  }
+  const line=pts.map((p,i)=>X(xs[i])+','+Y(p.n)).join(' ');
+  const dots=pts.map((p,i)=>'<circle cx="'+X(xs[i])+'" cy="'+Y(p.n)+'" r="5" fill="'+(p.base?'#4b3fbe':'#fff')+'" stroke="#4b3fbe" stroke-width="2.6"><title>'+dBR(p.date)+' — '+titerLabel(p.n)+(p.base?' (pré-tratamento)':'')+'</title></circle>').join('');
+  let doses='';
+  state.doses.forEach(d=>{
+    const t=new Date(d.date+'T00:00').getTime();
+    if(t<x0||t>x1) return;
+    doses+='<line x1="'+X(t)+'" y1="'+PT+'" x2="'+X(t)+'" y2="'+(H-PB)+'" stroke="#e0a53c" stroke-width="1.5" stroke-dasharray="3 4"/>';
+  });
+  let expo='';
+  if(expT!==null&&expT>=x0&&expT<=x1){
+    expo='<line x1="'+X(expT)+'" y1="'+PT+'" x2="'+X(expT)+'" y2="'+(H-PB)+'" stroke="#e2685e" stroke-width="1.8"/>'+
+      '<text x="'+(X(expT)+4)+'" y="'+(PT+10)+'" font-size="10" fill="#c4544a" font-family="IBM Plex Mono, monospace">contaminação</text>';
+  }
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;margin:6px 0" role="img" aria-label="Curva de titulação">'+
+    target+grid+doses+expo+'<polyline points="'+line+'" fill="none" stroke="#4b3fbe" stroke-width="2.6" stroke-linejoin="round"/>'+dots+
+    '<text x="'+PL+'" y="'+(H-9)+'" font-size="11" fill="#645d85" font-family="IBM Plex Mono, monospace">'+dBR(pts[0].date)+'</text>'+
+    '<text x="'+(W-PR)+'" y="'+(H-9)+'" text-anchor="end" font-size="11" fill="#645d85" font-family="IBM Plex Mono, monospace">'+dBR(pts[pts.length-1].date)+'</text></svg>'+
+    '<p class="hint" style="margin-top:0">Linha tracejada laranja: dose aplicada. Linha vermelha: contaminação. Ponto cheio: título antes do tratamento.</p>';
+}
+
+/* ================= LISTAS ================= */
+function renderHist(){
+  const ex=[...state.exams].sort((a,b)=>a.date<b.date?1:-1),box=$('hist');
+  if(!ex.length){ box.innerHTML='<p class="empty">Nenhum resultado salvo ainda.</p>'; return; }
+  const base=state.cfg.baseN;
+  let h='<table class="t"><tr><th>Data</th><th>Título</th><th>Vs. inicial</th><th>Laboratório</th><th></th></tr>';
+  for(const e of ex){
+    let v='—';
+    if(base!==null&&base>=0&&e.n>=0){ const d=base-e.n; v=d>0?'↓ '+Math.pow(2,d)+'×':d<0?'↑ '+Math.pow(2,-d)+'×':'igual'; }
+    else if(e.n<0) v='negativou';
+    h+='<tr><td class="n">'+dBR(e.date)+'</td><td class="n"><b>'+titerLabel(e.n)+'</b></td><td class="n">'+v+'</td>'+
+      '<td style="color:var(--muted);font-size:13px">'+esc(e.lab||'')+(e.obs?' · '+esc(e.obs):'')+'</td>'+
+      '<td><button class="del" data-x="'+e.date+'">×</button></td></tr>';
+  }
+  box.innerHTML=h+'</table>';
+  box.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{
+    state.exams=state.exams.filter(x=>x.date!==b.dataset.x); await save(); renderAll(); SFX.undo(); toast('Resultado apagado');
+  });
+}
+function renderDoses(){
+  const ds=[...state.doses].sort((a,b)=>a.date<b.date?1:-1),box=$('doses');
+  if(!ds.length){ box.innerHTML='<p class="empty">Nenhuma dose registrada.</p>'; return; }
+  const total=state.cfg.scheme==='0'?null:parseInt(state.cfg.scheme,10);
+  let h='<table class="t" style="margin-top:14px"><tr><th>Data</th><th>Local</th><th>Intervalo</th><th></th></tr>';
+  const asc=[...ds].reverse();
+  asc.forEach((d,i)=>{
+    let gap='—';
+    if(i>0){ const g=daysBetween(asc[i-1].date,d.date); gap=g+' dias'+(g>14?' ⚠':''); }
+    h+='<tr><td class="n">'+dBR(d.date)+'</td><td style="color:var(--muted);font-size:13px">'+esc(d.local||'')+'</td>'+
+      '<td class="n">'+gap+'</td><td><button class="del" data-d="'+d.date+'">×</button></td></tr>';
+  });
+  h+='</table>';
+  if(total&&ds.length<total){
+    const next=addMonths(asc[asc.length-1].date,0);
+    const d=new Date(next+'T00:00'); d.setDate(d.getDate()+7);
+    h+='<p class="hint">Faltam '+(total-ds.length)+' dose(s) do esquema. A próxima costuma ser marcada para '+dBR(d.toISOString().slice(0,10))+'. Intervalo acima de 14 dias entre doses pode levar à indicação de reiniciar o esquema — confirme com o Dr. Eduardo Miolo de Carvalho.</p>';
+  }
+  box.innerHTML=h;
+  box.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{
+    state.doses=state.doses.filter(x=>x.date!==b.dataset.d); await save(); renderAll(); SFX.undo(); toast('Dose removida');
+  });
+}
+function scheduleList(){
+  const start=state.doses.length?[...state.doses].map(d=>d.date).sort()[0]:state.cfg.dxDate;
+  if(!start) return [];
+  const ms=(state.cfg.months||'3, 6, 12').split(',').map(s=>parseInt(s,10)).filter(n=>n>0);
+  return ms.map(m=>{
+    const due=addMonths(start,m);
+    const done=state.exams.some(e=>Math.abs(daysBetween(due,e.date))<=45&&e.date>=start);
+    return {m,due,done,late:!done&&due<today()};
+  });
+}
+function renderAgenda(){
+  const list=scheduleList(),box=$('agenda');
+  if(!list.length){ box.innerHTML='<p class="empty">Informe a data do diagnóstico ou registre a primeira dose.</p>'; return; }
+  box.innerHTML=list.map(s=>'<div class="ag '+(s.done?'done':s.late?'late':'')+'"><b>'+s.m+' meses</b> '+
+    '<span>'+dBR(s.due)+' · '+(s.done?'coletado':s.late?'atrasado':'a fazer')+'</span></div>').join('');
+}
+function renderChecks(){
+  $('checks').innerHTML=LABS.map((l,i)=>'<label class="chk"><input type="checkbox" data-c="'+i+'" '+(state.cfg.checks.includes(i)?'checked':'')+'> '+l+'</label>').join('');
+  $('checks').querySelectorAll('input').forEach(c=>c.onchange=async()=>{
+    const i=+c.dataset.c;
+    state.cfg.checks=c.checked?[...new Set([...state.cfg.checks,i])]:state.cfg.checks.filter(x=>x!==i);
+    await save(); SFX.step();
+  });
+}
+function renderTrep(){
+  const ts=[...state.trep].sort((a,b)=>a.date<b.date?1:-1),box=$('trepList');
+  if(!ts.length){ box.innerHTML='<p class="empty">Nenhum treponêmico registrado.</p>'; return; }
+  const c=state.cfg;
+  const base=c.btMethod||c.btResult||c.btIndex!=null?{date:c.dxDate,method:c.btMethod||'Não informado',result:c.btResult||'—',idx:c.btIndex}:null;
+  let head='';
+  if(base){
+    const later=ts.filter(t=>t.idx!=null&&t.method===base.method).sort((a,b)=>a.date<b.date?1:-1)[0];
+    let sub='Referência do diagnóstico. É com este valor que os resultados seguintes são comparados.';
+    if(later&&base.idx!=null){
+      const pct=(later.idx-base.idx)/base.idx*100;
+      sub='Índice em '+dBR(later.date)+': <b>'+decShow(later.idx)+'</b> ('+(pct>=0?'+':'−')+Math.abs(pct).toFixed(0)+'% em relação ao inicial). Essa variação não indica resposta ao tratamento — quem avalia é o Dr. Eduardo Miolo de Carvalho.';
+    }
+    head='<div class="trbase hide"><div class="lbl">Antes do tratamento</div>'+
+      '<div class="val">'+(base.date?dBR(base.date)+' · ':'')+esc(base.method)+' · '+esc(base.result)+(base.idx!=null?' · índice '+decShow(base.idx):'')+'</div>'+
+      '<div class="sub">'+sub+'</div></div>';
+  } else {
+    head='<p class="hint" style="margin-top:12px">Preencha o treponêmico anterior ao tratamento no bloco <b>Meu caso</b> para fixá-lo como referência.</p>';
+  }
+  let h=head+'<table class="t" style="margin-top:14px"><tr><th>Data</th><th>Método</th><th>Resultado</th><th>Índice</th><th>Laboratório</th><th></th></tr>';
+  for(const t of ts){
+    const col=t.result==='Reagente'?'var(--indigo)':t.result==='Indeterminado'?'var(--amber)':'var(--teal)';
+    h+='<tr><td class="n">'+dBR(t.date)+'</td><td style="font-size:13px">'+esc(t.method)+'</td>'+
+      '<td><span class="tag" style="background:'+col+'">'+esc(t.result)+'</span></td>'+
+      '<td class="n">'+(t.idx!=null?decShow(t.idx):'—')+'</td>'+
+      '<td style="color:var(--muted);font-size:13px">'+esc(t.lab||'')+'</td>'+
+      '<td><button class="del" data-t="'+t.date+'">×</button></td></tr>';
+  }
+  box.innerHTML=h+'</table>';
+  box.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{
+    state.trep=state.trep.filter(x=>x.date!==b.dataset.t); await save(); renderAll(); SFX.undo(); toast('Registro apagado');
+  });
+}
+function renderAll(){ renderExposure(); renderTrep(); renderStatus(); renderChart(); renderHist(); renderDoses(); renderAgenda(); }
+
+/* ================= PDF ================= */
+function makePDF(){
+  if(!window.jspdf){ toast('Biblioteca do PDF não carregou — verifique a conexão'); SFX.undo(); return; }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210,M=16;
+  const IND=[75,63,190],TEAL=[15,163,156],CORAL=[226,104,94],GREY=[100,93,133],INK=[26,22,51],AMB=[224,165,60];
+  const a=analyse();
+
+  /* cabeçalho */
+  doc.setFillColor(...IND); doc.rect(0,0,W,40,'F');
+  doc.setFillColor(...TEAL); doc.rect(0,38,W,2.4,'F');
+  doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(21);
+  doc.text('Acompanhamento sorológico',M,20);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text('Curva de titulação '+state.cfg.test+'  ·  emitido em '+dBR(today()),M,26);
+  doc.setFontSize(9.5);
+  doc.text('Acompanhamento com Dr. Eduardo Miolo de Carvalho',M,32.5);
+
+  let y=50;
+  if(state.cfg.expDate){
+    doc.setFillColor(253,236,235); doc.roundedRect(M,y,W-2*M,13,3,3,'F');
+    doc.setDrawColor(...CORAL); doc.setLineWidth(1.2); doc.line(M+.6,y+1,M+.6,y+12);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(196,84,74);
+    doc.text('CONTAMINAÇÃO',M+5,y+5.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...INK);
+    const _d=new Date(state.cfg.expDate+'T'+(state.cfg.expTime||'00:00'));
+    const _days=Math.floor((Date.now()-_d.getTime())/864e5);
+    doc.text(dBR(state.cfg.expDate)+(state.cfg.expTime?' as '+state.cfg.expTime:'')+'  ·  '+WD[_d.getDay()]+'  ·  '+_days+' dias ate hoje',M+5,y+10.5);
+    y+=19;
+  }
+  /* resumo */
+  doc.setTextColor(...INK); doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text('Resumo',M,y); y+=6;
+  const cards=[
+    ['Título atual',a?titerLabel(a.last.n):'—'],
+    ['Título inicial',(state.cfg.baseN!==null&&state.cfg.baseN>=0)?titerLabel(state.cfg.baseN):'—'],
+    ['Variação',a&&a.dropped!==null?(a.dropped>0?'queda de '+Math.pow(2,a.dropped)+'x':a.dropped<0?'aumento de '+Math.pow(2,-a.dropped)+'x':'sem mudança'):'—'],
+    ['Seguimento',a&&a.months!==null?a.months+' meses':'—']
+  ];
+  const cw=(W-2*M-3*4)/4;
+  cards.forEach((c,i)=>{
+    const x=M+i*(cw+4);
+    doc.setFillColor(240,238,248); doc.roundedRect(x,y,cw,20,3,3,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...GREY);
+    doc.text(c[0].toUpperCase(),x+4,y+7);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...INK);
+    doc.text(String(c[1]),x+4,y+15);
+  });
+  y+=27;
+
+  /* faixa de status */
+  if(a){
+    const col=a.status.k==='up'?CORAL:a.status.k==='wait'?AMB:TEAL;
+    doc.setFillColor(...col); doc.roundedRect(M,y,W-2*M,12,3,3,'F');
+    doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text(a.status.label,M+5,y+8);
+    y+=19;
+  }
+
+  /* curva */
+  doc.setTextColor(...INK); doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text('Curva de titulação',M,y); y+=5;
+  const pts=[];
+  if(state.cfg.baseN!==null&&state.cfg.baseN>=0&&state.cfg.dxDate) pts.push({date:state.cfg.dxDate,n:state.cfg.baseN,base:true});
+  [...state.exams].sort((p,q)=>p.date<q.date?-1:1).forEach(e=>pts.push(e));
+  const gx=M+16,gw=W-2*M-16,gy=y+4,gh=62;
+  if(pts.length>=2){
+    const xs=pts.map(p=>new Date(p.date+'T00:00').getTime());
+    const x0=Math.min(...xs),x1=Math.max(...xs),span=Math.max(1,x1-x0);
+    const maxN=Math.max(2,...pts.map(p=>p.n))+1;
+    const X=t=>gx+(t-x0)/span*gw, Y=n=>gy+(1-(n+1)/(maxN+1))*gh;
+    if(state.cfg.baseN>=2){
+      doc.setFillColor(225,244,242);
+      doc.rect(gx,Y(state.cfg.baseN-2),gw,gy+gh-Y(state.cfg.baseN-2),'F');
+      doc.setDrawColor(...TEAL); doc.setLineWidth(.4); doc.setLineDashPattern([1.6,1.2],0);
+      doc.line(gx,Y(state.cfg.baseN-2),gx+gw,Y(state.cfg.baseN-2));
+      doc.setLineDashPattern([],0);
+    }
+    doc.setDrawColor(226,222,242); doc.setLineWidth(.2);
+    doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(...GREY);
+    for(let n=-1;n<=maxN;n++){
+      doc.line(gx,Y(n),gx+gw,Y(n));
+      doc.text(n<0?'NR':'1:'+Math.pow(2,n),gx-2,Y(n)+1.6,{align:'right'});
+    }
+    doc.setDrawColor(...AMB); doc.setLineWidth(.35); doc.setLineDashPattern([1,1.4],0);
+    state.doses.forEach(d=>{ const t=new Date(d.date+'T00:00').getTime(); if(t>=x0&&t<=x1) doc.line(X(t),gy,X(t),gy+gh); });
+    doc.setLineDashPattern([],0);
+    doc.setDrawColor(...IND); doc.setLineWidth(.8);
+    for(let i=1;i<pts.length;i++) doc.line(X(xs[i-1]),Y(pts[i-1].n),X(xs[i]),Y(pts[i].n));
+    pts.forEach((p,i)=>{
+      doc.setFillColor(...(p.base?IND:[255,255,255]));
+      doc.circle(X(xs[i]),Y(p.n),1.5,'FD');
+    });
+    doc.setFontSize(6.5); doc.setTextColor(...GREY);
+    doc.text(dBR(pts[0].date),gx,gy+gh+5);
+    doc.text(dBR(pts[pts.length-1].date),gx+gw,gy+gh+5,{align:'right'});
+    y=gy+gh+11;
+  } else { doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...GREY);
+    doc.text('Dados insuficientes para desenhar a curva.',M,y+6); y+=14; }
+
+  /* tabela de resultados */
+  doc.setTextColor(...INK); doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text('Resultados',M,y); y+=7;
+  const rows=[...state.exams].sort((p,q)=>p.date<q.date?-1:1);
+  doc.setFontSize(7.5); doc.setTextColor(...GREY); doc.setFont('helvetica','bold');
+  doc.text('DATA',M+2,y); doc.text('TÍTULO',M+34,y); doc.text('VS. INICIAL',M+68,y); doc.text('LABORATÓRIO',M+104,y);
+  y+=2; doc.setDrawColor(226,222,242); doc.setLineWidth(.3); doc.line(M,y,W-M,y); y+=4;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...INK);
+  rows.forEach((e,i)=>{
+    if(y>268){ doc.addPage(); y=22; }
+    if(i%2===0){ doc.setFillColor(247,246,252); doc.rect(M,y-4,W-2*M,7,'F'); }
+    let v='-';
+    if(state.cfg.baseN!==null&&state.cfg.baseN>=0&&e.n>=0){ const d=state.cfg.baseN-e.n; v=d>0?'queda '+Math.pow(2,d)+'x':d<0?'aumento '+Math.pow(2,-d)+'x':'igual'; }
+    else if(e.n<0) v='negativou';
+    doc.text(dBR(e.date),M+2,y); doc.text(titerLabel(e.n),M+34,y); doc.text(v,M+68,y);
+    doc.text(String(e.lab||'-').slice(0,32),M+104,y);
+    y+=7;
+  });
+  y+=6;
+
+  /* treponêmico */
+  if(state.trep.length){
+    if(y>236){ doc.addPage(); y=22; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...INK);
+    doc.text('Teste treponêmico (anticorpos totais)',M,y); y+=7;
+    const _c=state.cfg;
+    const _b=(_c.btMethod||_c.btResult||_c.btIndex!=null)?{date:_c.dxDate,method:_c.btMethod||'Nao informado',result:_c.btResult||'-',idx:_c.btIndex}:null;
+    if(_b){
+      doc.setFillColor(240,238,248); doc.roundedRect(M,y-4.5,W-2*M,9,2,2,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...IND);
+      doc.text('ANTES DO TRATAMENTO: '+(_b.date?dBR(_b.date)+'  ·  ':'')+_b.method+'  ·  '+_b.result+(_b.idx!=null?'  ·  indice '+decShow(_b.idx):''),M+3,y+1);
+      y+=11; doc.setTextColor(...INK);
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    [...state.trep].sort((p,q)=>p.date<q.date?-1:1).forEach(t=>{
+      if(y>268){ doc.addPage(); y=22; }
+      doc.text(dBR(t.date)+'  ·  '+t.method+'  ·  '+t.result+(t.idx!=null?'  ·  indice '+decShow(t.idx):'')+(t.lab?'  ·  '+t.lab:''),M+2,y);
+      y+=6;
+    });
+    doc.setFontSize(7.5); doc.setTextColor(...GREY);
+    doc.text('Permanece reagente por toda a vida na maior parte dos casos; o indice nao mede resposta ao tratamento.',M+2,y); y+=10;
+    doc.setTextColor(...INK);
+  }
+
+  /* doses */
+  if(state.doses.length){
+    if(y>240){ doc.addPage(); y=22; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...INK);
+    doc.text('Doses aplicadas',M,y); y+=7;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    [...state.doses].sort((p,q)=>p.date<q.date?-1:1).forEach((d,i)=>{
+      doc.text('Dose '+(i+1)+' — '+dBR(d.date)+(d.local?'  ·  '+d.local:''),M+2,y); y+=6;
+    });
+    y+=4;
+  }
+
+  /* rodapé */
+  const pages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=pages;p++){
+    doc.setPage(p);
+    doc.setDrawColor(226,222,242); doc.setLineWidth(.3); doc.line(M,282,W-M,282);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...GREY);
+    doc.text('Documento gerado pelo próprio paciente para a consulta com o Dr. Eduardo Miolo de Carvalho. Não é laudo, não faz diagnóstico e não define tratamento.',M,287);
+    doc.text('Feito com amor por Henrique',M,291);
+    doc.text('Página '+p+' de '+pages,W-M,287,{align:'right'});
+  }
+  doc.save('acompanhamento-sorologico.pdf');
+  SFX.paper(); toast('PDF gerado');
+}
+
+/* ================= EVENTOS ================= */
+['expDate','expTime','dxDate','test','baseT','btMethod','btResult','btIndex','scheme','months'].forEach(id=>$(id).addEventListener('change',async()=>{
+  state.cfg.expDate=$('expDate').value; state.cfg.expTime=$('expTime').value;
+  state.cfg.dxDate=$('dxDate').value; state.cfg.test=$('test').value;
+  state.cfg.baseN=$('baseT').value===''?null:parseInt($('baseT').value,10);
+  state.cfg.btMethod=$('btMethod').value; state.cfg.btResult=$('btResult').value;
+  state.cfg.btIndex=decParse($('btIndex').value);
+
+  state.cfg.scheme=$('scheme').value; state.cfg.months=$('months').value;
+  await save(); SFX.tap(); renderAll();
+}));
+$('save').onclick=async()=>{
+  const d=$('date').value||today(), n=parseInt($('titer').value,10);
+  if(isNaN(n)){ SFX.undo(); toast('Escolha o título'); return; }
+  state.exams=state.exams.filter(e=>e.date!==d);
+  state.exams.push({date:d,n,lab:$('lab').value.trim(),obs:$('obs').value.trim()});
+  await save(); renderAll(); SFX.saved();
+  toast(persisted?'Resultado salvo':'Salvo nesta sessão — exporte um backup para não perder');
+};
+$('clearForm').onclick=()=>{ $('lab').value=''; $('obs').value=''; SFX.tap(); };
+$('addDose').onclick=async()=>{
+  const d=$('doseDate').value;
+  if(!d){ SFX.undo(); toast('Informe a data da aplicação'); return; }
+  state.doses=state.doses.filter(x=>x.date!==d);
+  state.doses.push({date:d,local:$('doseLocal').value.trim()});
+  await save(); renderAll(); SFX.saved(); toast('Dose registrada');
+};
+$('addTrep').onclick=async()=>{
+  const d=$('trDate').value;
+  if(!d){ SFX.undo(); toast('Informe a data da coleta'); return; }
+  const iv=decParse($('trIndex').value);
+  state.trep=state.trep.filter(x=>x.date!==d);
+  state.trep.push({date:d,method:$('trMethod').value,result:$('trResult').value,idx:iv,lab:$('trLab').value.trim()});
+  await save(); renderAll(); SFX.saved(); toast('Treponêmico registrado');
+};
+$('pdf').onclick=makePDF;
+$('csv').onclick=()=>{
+  const ex=[...state.exams].sort((a,b)=>a.date<b.date?-1:1);
+  if(!ex.length){ SFX.undo(); toast('Nada para exportar'); return; }
+  const rows=[['data','teste','titulo','expoente','laboratorio','observacao']];
+  ex.forEach(e=>rows.push([e.date,state.cfg.test,titerLabel(e.n),e.n,(e.lab||''),(e.obs||'').replace(/;/g,',')]));
+  dl(new Blob([rows.map(r=>r.join(';')).join('\n')],{type:'text/csv;charset=utf-8'}),'acompanhamento-sorologico.csv'); SFX.paper();
+};
+$('json').onclick=()=>{ dl(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),'acompanhamento-backup.json'); SFX.paper(); toast('Backup gerado'); };
+$('load').onclick=()=>$('loadFile').click();
+$('loadFile').onchange=async ev=>{
+  const f=ev.target.files[0]; if(!f) return;
+  try{
+    const d=JSON.parse(await f.text());
+    Object.assign(state.cfg,d.cfg||{});
+    const seenE=new Set(state.exams.map(e=>e.date)); (d.exams||[]).forEach(e=>{ if(!seenE.has(e.date)) state.exams.push(e); });
+    const seenD=new Set(state.doses.map(x=>x.date)); (d.doses||[]).forEach(x=>{ if(!seenD.has(x.date)) state.doses.push(x); });
+    const seenT=new Set(state.trep.map(x=>x.date)); (d.trep||[]).forEach(x=>{ if(!seenT.has(x.date)) state.trep.push(x); });
+    await save(); fillForm(); renderAll(); SFX.saved(); toast('Backup restaurado');
+  }catch(err){ SFX.undo(); toast('Arquivo inválido'); }
+  ev.target.value='';
+};
+function dl(blob,name){ const u=URL.createObjectURL(blob),a=document.createElement('a'); a.href=u;a.download=name;a.click(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
+function fillForm(){
+  $('expDate').value=state.cfg.expDate||''; $('expTime').value=state.cfg.expTime||'';
+  $('dxDate').value=state.cfg.dxDate||'';
+  $('test').value=state.cfg.test||'VDRL';
+  $('baseT').value=state.cfg.baseN===null||state.cfg.baseN===undefined?'':state.cfg.baseN;
+  $('btMethod').value=state.cfg.btMethod||''; $('btResult').value=state.cfg.btResult||'';
+  $('btIndex').value=decShow(state.cfg.btIndex??null);
+  $('scheme').value=state.cfg.scheme||'1';
+  $('months').value=state.cfg.months||'3, 6, 12';
+}
+(async()=>{
+  fillTiterSelect($('baseT'),false);
+  $('baseT').insertAdjacentHTML('afterbegin','<option value="">—</option>');
+  fillTiterSelect($('titer'),true);
+  await load(); fillForm();
+  $('date').value=today(); $('doseDate').value=today(); $('trDate').value=today();
+  bindDecimals(); renderChecks(); renderAll();
+})();
+</script>
+</body>
+</html>
